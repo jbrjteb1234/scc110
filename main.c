@@ -1,10 +1,12 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include <strings.h>
 #include <unistd.h>
 #include <math.h>
+#include <ncurses.h>
 
-#include "entities.c"
-#include "screen.c"
+#include "entities.h"
+#include "screen.h"
 
 #define FRAME_DELAY 400
 
@@ -13,13 +15,15 @@
 void loop(ship* s1){
 
     for(int i=0; i<TEST_RUN; ++i){
+        checkInput(s1);
+
         drawBorders();
-        thrustShip(s1);
-        //mvprintw(s1->y, s1->x, "O");
+        calculateMovement(s1);
         drawShip(s1);
 
 
         refresh();
+        flushinp();
         usleep(FRAME_DELAY*1000);
         clears();
     }
@@ -27,7 +31,6 @@ void loop(ship* s1){
 }
 
 void setup(){
-
     setupScreen();
 
     ship* ship1 = setupShip();

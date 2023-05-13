@@ -1,4 +1,5 @@
 #include <math.h>
+#include <ncurses.h>
 #define MAX_FUEL 5000
 
 #define MAX_X 420
@@ -33,41 +34,19 @@ ship* setupShip(){
     return s;
 }
 
+void checkInput(ship *s){
+    int ch = getch();
 
-
-//void move (ship* s){
-    
-//}
-
-void thrustShip(ship *s){
-    switch(s->direction){
-        case(0):
-            ++s->y;
+    switch(ch){
+        case('a'):
+            s->direction=(s->direction-1<0) ? (7) : (s->direction-1);
             break;
-        case(1):
-            s->x+=-2;
-            ++s->y;
-            break;
-        case(2):
-            s->x+=-2;
-            break;
-        case(3):
-            s->x+=-2;
-            --s->y;
-            break;
-        case(4):
-            --s->y;
-            break;
-        case(5):
-            s->x+=2;
-            --s->y;
-            break;
-        case(6):
-            s->x+=2;
-            break;
-        case(7):
-            s->x+=2;
-            ++s->y;
+        case('d'):
+            s->direction=(s->direction+1)%7;
             break;
     }
+}
+
+void calculateMovement (ship* s){
+    
 }

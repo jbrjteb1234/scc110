@@ -5,21 +5,30 @@
 #include <math.h>
 #include <ncurses.h>
 
-#include "entities.h"
+#include "entities.c"
 #include "screen.h"
 
 #define FRAME_DELAY 400
 
 #define TEST_RUN 50
 
-void loop(ship* s1){
+void loop(){
+    setupScreen();
+
+    ship* ship1 = setupShip();
+    torpedo** torpedoArray = setupTorpedoArray();
 
     for(int i=0; i<TEST_RUN; ++i){
-        checkInput(s1);
+        checkInput(ship1,torpedoArray);
 
         drawBorders();
-        calculateMovement(s1);
-        drawShip(s1);
+        
+        calculateThrust(ship1);
+        calculateMovement(ship1,i);
+        updateTorpedos(torpedoArray);
+
+        drawTorpedos(torpedoArray);
+        drawShip(ship1);
 
 
         refresh();
@@ -30,14 +39,6 @@ void loop(ship* s1){
     endwin();
 }
 
-void setup(){
-    setupScreen();
-
-    ship* ship1 = setupShip();
-
-    loop(ship1);
-}
-
 int main(){
     
     char res;
@@ -46,7 +47,7 @@ int main(){
     scanf("%c\n",&res);
 
     if (res=='Y' || res=='y'){
-        setup();
+        loop();
     }
 
     return 1;

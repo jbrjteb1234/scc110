@@ -15,9 +15,11 @@ void drawBorders(){//draws a border of hashtags and prints the singularity
         mvprintw(MAX_Y,i,"#");
     }
 
-    mvprintw((MAX_Y/2)-1, (MAX_X/2)-1, "@@@");
-    mvprintw((MAX_Y/2), (MAX_X/2)-1, "@@@");
-    mvprintw((MAX_Y/2)+1, (MAX_X/2)-1, "@@@");
+    for(int i=-(SINGULARITY_WIDTH-1)/2; i<SINGULARITY_WIDTH; ++i){
+        mvprintw((MAX_Y/2)+i, (MAX_X/2)-(SINGULARITY_WIDTH-1)/2, "@@@@@@@@@@");
+    }
+
+    
 }
 
 void clears(){//clears every square by printing " "
@@ -31,47 +33,74 @@ void clears(){//clears every square by printing " "
 void drawShip(ship* s){
     int x = s->x;
     int y = s->y;
+    int t = s->thrust;
     mvprintw(y, x, "O");
     switch(s->direction){
         case(0):
             mvprintw(y-1, x-2, "# 0 #");
             mvprintw(y+1, x, "0");
+            if(t){
+                mvprintw(y-2, x-1, "| |");
+            }
             break;
         case(1):
             mvprintw(y-1, x, "# 0");
             mvprintw(y, x+2, "#");
             mvprintw(y+1, x-2, "0");
+            if(t){
+                mvprintw(y-2, x+2, "/");
+                mvprintw(y-1, x+4, "/");
+            }
             break;
         case(2):
             mvprintw(y, x-2, "0");
             mvprintw(y-1, x+2, "#");
             mvprintw(y+1, x+2, "#");
             mvprintw(y, x+2, "0");
+            if(t){
+                mvprintw(y,x+4, "==");
+            }
             break;
         case(3):
             mvprintw(y-1, x-2, "0");
             mvprintw(y, x+2, "#");
             mvprintw(y+1, x, "# 0");
+            if(t){
+                mvprintw(y+1, x+4, "\\");
+                mvprintw(y+2, x+2, "\\");
+            }
             break;
         case(4):
             mvprintw(y-1, x, "0");
             mvprintw(y+1, x-2, "# 0 #");
+            if(t){
+                mvprintw(y+2, x-1, "| |");
+            }
             break;
         case(5):
             mvprintw(y-1, x+2, "O");
             mvprintw(y+1, x-2, "0 #");
             mvprintw(y, x-2, "#");
+            if(t){
+                mvprintw(y+2, x-2, "/");
+                mvprintw(y+1, x-4, "/");
+            }
             break;
         case(6):
             mvprintw(y, x-2, "0");
             mvprintw(y-1, x-2, "#");
             mvprintw(y+1, x-2, "#");
             mvprintw(y, x+2, "0");
+            if(t){
+                mvprintw(y,x-4,"==");
+            }
             break;
         case(7):
             mvprintw(y+1, x+2, "0");
             mvprintw(y, x-2, "#");
             mvprintw(y-1, x-2, "0 #");
+                mvprintw(y-2, x-2, "\\");
+                mvprintw(y-1, x-4, "\\");
             break;
     }
 }

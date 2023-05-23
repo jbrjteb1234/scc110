@@ -7,28 +7,32 @@
 
 #include "entities.c"
 #include "screen.h"
+#include "input.c"
 
-#define FRAME_DELAY 400
-
-#define TEST_RUN 50
+#define TEST_RUN 200
+#define FRAME_DELAY 200
 
 void loop(){
     setupScreen();
 
-    ship* ship1 = setupShip();
+    ship* ship1 = setupShip(1);
+    ship* ship2 = setupShip(2);
     torpedo** torpedoArray = setupTorpedoArray();
 
     for(int i=0; i<TEST_RUN; ++i){
-        checkInput(ship1,torpedoArray);
+        executeInputBuffer(ship1,ship2,torpedoArray);
 
         drawBorders();
         
         calculateThrust(ship1);
+        calculateThrust(ship2);
         calculateMovement(ship1,i);
+        calculateMovement(ship2,i);
         updateTorpedos(torpedoArray);
 
         drawTorpedos(torpedoArray);
         drawShip(ship1);
+        drawShip(ship2);
 
 
         refresh();

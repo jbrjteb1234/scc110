@@ -1,9 +1,17 @@
+#include <unistd.h>
+
 #define MAX_FUEL 5000
 
 #define MAX_X 400
 #define MAX_Y 80
 
-#define MAX_TORPEDOS 100
+#define MAX_TORPEDOS 10
+
+#define MAX_INP 10
+
+
+
+#define SINGULARITY_WIDTH 5
 
 typedef struct{
     int direction;
@@ -23,14 +31,14 @@ typedef struct{
     int y;
 } torpedo;
 
-ship* setupShip(){
+ship* setupShip(int num){
     //creates ship on the heap for use across program
     ship* s = malloc(sizeof(ship));
-    s->x = round(MAX_X/4);
-    s->y = round((MAX_Y*3)/4);
+    s->x = (num==1) ? round(MAX_X/4) : round((MAX_X*3)/4);
+    s->y = (num==1) ? round((MAX_Y*3)/4) : round((MAX_Y)/4);
     s->xVel = 0;
     s->yVel = 0;
-    s->direction=5;
+    s->direction=(num==1) ? 5 : 1;
     s->fuel=MAX_FUEL;
     s->thrust=0;
 
@@ -43,6 +51,7 @@ ship* setupShip(){
 
 void calculateThrust (ship* s){
     if(s->thrust==1){
+        --s->fuel;
         switch(s->direction){
             case(0):
                 s->yVel+=1;
@@ -88,7 +97,7 @@ void calculateThrust (ship* s){
 }
 
 void calculateMovement(ship* s, int frame){
-    if(frame%4==0){
+    if(frame%6==0){
         float xDiff = (s->x-MAX_X/2)/2;
         float yDiff = s->y-MAX_Y/2;
     
@@ -104,8 +113,10 @@ void calculateMovement(ship* s, int frame){
             s->yVel=(s->yVel<2)? s->yVel+1 : s->yVel;
         }
     }
-    s->x+=s->xVel*2;
-    s->y+=s->yVel;
+    if(frame%2==0){
+        s->x+=s->xVel*2;
+        s->y+=s->yVel;
+    }
 }
 
 torpedo** setupTorpedoArray(){
@@ -116,7 +127,6 @@ torpedo** setupTorpedoArray(){
 void createTorpedo(torpedo** arr, ship* s){
     for(int i=0; i<MAX_TORPEDOS; ++i){
         if(arr[i]==0){
-            printf("Creating torpedo!");
             arr[i] = malloc(sizeof(torpedo));
             arr[i]->direction = s->direction;
             arr[i]->x=s->x;
@@ -160,29 +170,58 @@ void updateTorpedos(torpedo** torpedoArray){
                 torp->x+=4;
                 break;
         }
-        if(0>=(torp->x)>=MAX_X || 0>=(torp->y)>=MAX_Y){
+        if(!(0<(torp->x)<MAX_X) || !(0<(torp->y)<MAX_Y)){
+            printf("torpedo out of bounds\n");
             free(torpedoArray[i]);
             torpedoArray[i]=0;
         }}
     }
 }
 
-void checkInput(ship *s, torpedo** ta){
-    int ch = getch();
-    s->thrust=0;
+void checkCollisions(ship *s1, ship *s2, torpedo** ta){
+    
+}
 
-    switch(ch){
+void checkInput(char key, ship *s1, ship *s2, torpedo** ta){
+
+    switch(key){
         case('a'):
-            s->direction=(s->direction-1<0) ? (7) : (s->direction-1);
+            s1->direction=(s1->direction-1<0) ? (7) : (s1->direction-1);
             break;
         case('d'):
-            s->direction=(s->direction+1)%7;
+            s1->direction=(s1->direction+1)%7;
             break;
         case('w'):
-            s->thrust=1;
-            --s->fuel;
+            s1->thrust=1;
+            break;
+        case('s'):
+            s1->thrust=0;
             break;
         case('e'):
-            createTorpedo(ta,s);
+            createTorpedo(ta,s1);
+            break;
     }
+}
+
+void executeInputBuffer(ship *s1, ship *s2, torpedo** ta){
+    int inputBuffer[MAX_INP];
+    int inputBufferPointer =0;
+    char alreadyIn;
+
+    for(int i=0; i<1000; ++i){
+        int ch = getch();
+        if(ch!=-1){
+            alreadyIn = 0;
+            for(int j=0; j<inputBufferPointer; ++j){
+                if (inputBuffer[j]==ch){
+                    alreadyIn=1;
+                }
+            }
+            if(alreadyIn==0){
+                inputBuffer[inputBufferPointer]=ch;
+                ++inputBufferPointer;
+                checkInput(ch, s1, s2, ta);
+            }
+        }
+    } 
 }

@@ -10,6 +10,7 @@
 
 #define FRAME_DELAY 200
 
+//main loop - repeats every time the  game is run
 int loop(){
     setupScreen();
 
@@ -63,6 +64,7 @@ int loop(){
     return res;
 }
 
+//starts the round taking the input of the previous scores
 void start(int p1, int p2){
     int res = loop();
     char y;

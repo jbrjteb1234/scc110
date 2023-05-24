@@ -15,6 +15,7 @@
 #define SINGULARITY_WIDTH 5
 
 typedef struct{
+    //ship to be controlled by players
     char direction;
     bool thrust;
     int y;
@@ -29,6 +30,7 @@ typedef struct{
 } ship;
 
 typedef struct{
+    //torpedoes to be shot out the ship
     int direction;
     int x;
     int y;
@@ -87,6 +89,7 @@ void calculateDirection(int dir, int* x, int* y, int scalar){
 
 
 void calculateThrust (ship* s){
+    //calculates thrust by checking fuel is there and capping it at 3
     if(s->thrust==1 && s->fuel>0){
         --s->fuel;
         calculateDirection(s->direction, &s->xVel, &s->yVel, 1);
@@ -104,7 +107,8 @@ void calculateThrust (ship* s){
     }
 }
 
-void calculateMovement(ship* s, int frame){
+void calculateMovement(ship* s, int frame, ship* s0){
+    //calculates gravity for ship
     if(frame%6==0){
         float xDiff = (s->x-MAX_X/2)/2;
         float yDiff = s->y-MAX_Y/2;
@@ -125,16 +129,19 @@ void calculateMovement(ship* s, int frame){
         s->x+=s->xVel*2;
         s->y+=s->yVel;
     }
-
-    if(0>s->y || MAX_Y<s->y || 0>s->x || MAX_X < s->x || (abs(s->x-(MAX_X/2))<((SINGULARITY_WIDTH*2)-2) && abs(s->y-(MAX_Y/2))<(SINGULARITY_WIDTH-1))){
+    //checks collisions for ship - wall, black hole, enemy ship
+    if(0>s->y || MAX_Y<s->y || 0>s->x || MAX_X < s->x || (abs(s->x-(MAX_X/2))<((SINGULARITY_WIDTH*2)-2) && abs(s->y-(MAX_Y/2))<(SINGULARITY_WIDTH-1)) || ((abs(s->x-s0->x)<3 && abs(s->y-s0->y)<2))){
         s->alive=0;
     }
+    
 }
 
 torpedo** setupTorpedoArray(){
+    //creates array of torpedo pointers on heap
     torpedo** arr = malloc(sizeof(torpedo*)*MAX_TORPEDOES);
 
     for(int i=0; i<MAX_TORPEDOES; ++i){
+        //creates each torpedo on the heap and sets x to 9999 indicating that it is not been shot
         arr[i] = malloc(sizeof(torpedo));
         arr[i]->direction = -1;
         arr[i]->x=9999;
@@ -145,8 +152,10 @@ torpedo** setupTorpedoArray(){
 }
 
 void createTorpedo(torpedo** arr, ship* s){
+    //finds the next free torpedo to use
     for(int i=0; i<MAX_TORPEDOES; ++i){
         if(arr[i]->x==9999){
+            //moves to map
             arr[i]->direction = s->direction;
             arr[i]->x=s->x;
             arr[i]->y=s->y;
@@ -178,12 +187,12 @@ void updateTorpedos(torpedo** torpedoArray, ship* s1, ship* s2){
                 printf("%d    \n",s2->x-torp->x);
                 s2->alive=0;
             }
-            if(mvgetch(torp->y,torp->x)=='*'){
-                for(int j=0; j<MAX_TORPEDOES; ++j){
-                    if(torpedoArray[j]->x==torpedoArray[i]->x && torpedoArray[j]->y==torpedoArray[i]->y){
-                        torpedoArray[i]->x=9999;
-                        torpedoArray[j]->y=9999;
-                    }
+
+            //checks if two torpedoes are colliding
+            for(int j=0; j<MAX_TORPEDOES; ++j){
+                if(torpedoArray[j]->x==torpedoArray[i]->x && torpedoArray[j]->y==torpedoArray[i]->y && torpedoArray[i] != torpedoArray[j]){
+                    torpedoArray[i]->x=9999;
+                    torpedoArray[j]->y=9999;    
                 }
             }
         }
@@ -193,6 +202,7 @@ void updateTorpedos(torpedo** torpedoArray, ship* s1, ship* s2){
 void checkInput(char key, ship *s1, ship *s2, torpedo** ta){
 
     switch(key){
+        //input keys (top half for player 1, bottom half for player 2)
         case('a'):
             s1->direction=(s1->direction-1<0) ? (7) : (s1->direction-1);
             break;
@@ -239,6 +249,8 @@ void input(ship *s1, ship *s2, torpedo** ta){
     int ptr =0;
     char alreadyIn;
 
+    //checks the pressed keys 1000 times to allow for multiple inputs for one frame and puts them in an array
+    //if a key pressed is not in the array then it inputs it
     for(int i=0; i<1000; ++i){
         int ch = getch();
         if(ch!=-1){

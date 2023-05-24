@@ -27,8 +27,8 @@ int loop(){
         
         calculateThrust(ship1);
         calculateThrust(ship2);
-        calculateMovement(ship1,fc);
-        calculateMovement(ship2,fc);
+        calculateMovement(ship1,fc,ship2);
+        calculateMovement(ship2,fc,ship1);
 
         drawShip(ship1);
         drawShip(ship2);

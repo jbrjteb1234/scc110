@@ -34,7 +34,7 @@ void drawShip(ship* s){
     int x = s->x;
     int y = s->y;
     int t = s->thrust;
-    if(s->alive==1){
+    if(s->alive==1){//draws ship based on the rotation of it
         mvprintw(y, x, "O");
         switch(s->direction){
         case(0):

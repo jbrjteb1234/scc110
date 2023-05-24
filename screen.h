@@ -34,8 +34,9 @@ void drawShip(ship* s){
     int x = s->x;
     int y = s->y;
     int t = s->thrust;
-    mvprintw(y, x, "O");
-    switch(s->direction){
+    if(s->alive==1){
+        mvprintw(y, x, "O");
+        switch(s->direction){
         case(0):
             mvprintw(y-1, x-2, "# 0 #");
             mvprintw(y+1, x, "0");
@@ -99,16 +100,19 @@ void drawShip(ship* s){
             mvprintw(y+1, x+2, "0");
             mvprintw(y, x-2, "#");
             mvprintw(y-1, x-2, "0 #");
+            if(t){
                 mvprintw(y-2, x-2, "\\");
                 mvprintw(y-1, x-4, "\\");
+            }
             break;
-    }
-}
-
-void drawTorpedos(torpedo** torpArray){
-    for(int i=0; i<MAX_TORPEDOS; ++i){
-        if(torpArray[i]!=0){
-            mvprintw(torpArray[i]->y, torpArray[i]->x, "*");
         }
+        int infoXPos = 10;
+        int infoYPos = MAX_Y+4;
+        if(s->id==2){
+            infoXPos+=30;
+        }
+        mvprintw(infoYPos,infoXPos,"Player%d: ",s->id);
+        mvprintw(infoYPos+1, infoXPos,"Fuel: %d. ",s->fuel);
+        mvprintw(infoYPos+2, infoXPos,"Torpedos: %d. ", s->torpedoes);
     }
 }

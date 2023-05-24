@@ -1,11 +1,12 @@
 #include <unistd.h>
+#include <stdbool.h>
 
-#define MAX_FUEL 5000
+#define MAX_FUEL 1000
 
 #define MAX_X 400
 #define MAX_Y 80
 
-#define MAX_TORPEDOS 10
+#define MAX_TORPEDOES 100
 
 #define MAX_INP 10
 
@@ -14,15 +15,17 @@
 #define SINGULARITY_WIDTH 5
 
 typedef struct{
-    int direction;
-    int thrust;
+    char direction;
+    bool thrust;
     int y;
     int x;
     int xVel;
     int yVel;
-    int maxFuel;
     int fuel;
     int maxFireRate;
+    bool alive;
+    int torpedoes;
+    int id;
 } ship;
 
 typedef struct{
@@ -41,56 +44,61 @@ ship* setupShip(int num){
     s->direction=(num==1) ? 5 : 1;
     s->fuel=MAX_FUEL;
     s->thrust=0;
+    s->alive=1;
+    s->id=num;
+    s->torpedoes=MAX_TORPEDOES;
 
     return s;
 }
 
 
-
+void calculateDirection(int dir, int* x, int* y, int scalar){
+    switch(dir){
+            case(0):
+                *y+=scalar;
+                break;
+            case(1):
+                *y+=scalar;
+                *x-=scalar*2;
+                break;
+            case(2):
+                *x-=scalar*2;
+                break;
+            case(3):
+                *y-=scalar;
+                *x-=scalar*2;
+                break;
+            case(4):
+                *y-=scalar;
+                break;
+            case(5):
+                *y-=scalar;
+                *x+=scalar*2;
+                break;
+            case(6):
+                *x+=scalar*2;
+                break;
+            case(7):
+                *y+=scalar;
+                *x+=scalar*2;
+                break;
+        }
+}
 
 
 void calculateThrust (ship* s){
-    if(s->thrust==1){
+    if(s->thrust==1 && s->fuel>0){
         --s->fuel;
-        switch(s->direction){
-            case(0):
-                s->yVel+=1;
-                break;
-            case(1):
-                s->yVel+=1;
-                s->xVel-=1;
-                break;
-            case(2):
-                s->xVel-=1;
-                break;
-            case(3):
-                s->yVel-=1;
-                s->xVel-=1;
-                break;
-            case(4):
-                s->yVel-=1;
-                break;
-            case(5):
-                s->yVel-=1;
-                s->xVel+=1;
-                break;
-            case(6):
-                s->xVel+=1;
-                break;
-            case(7):
-                s->yVel+=1;
-                s->xVel+=1;
-                break;
-        }
-        if(s->xVel==-3){
+        calculateDirection(s->direction, &s->xVel, &s->yVel, 1);
+        if(s->xVel<=-3){
             s->xVel=-2;
-        }else if(s->xVel==3){
+        }else if(s->xVel>=3){
             s->xVel=2;
         }
 
-        if(s->yVel==-3){
+        if(s->yVel<=-3){
             s->yVel=-2;
-        }else if(s->yVel==3){
+        }else if(s->yVel>=3){
             s->yVel=2;
         }
     }
@@ -117,69 +125,69 @@ void calculateMovement(ship* s, int frame){
         s->x+=s->xVel*2;
         s->y+=s->yVel;
     }
+
+    if(0>s->y || MAX_Y<s->y || 0>s->x || MAX_X < s->x || (abs(s->x-(MAX_X/2))<((SINGULARITY_WIDTH*2)-2) && abs(s->y-(MAX_Y/2))<(SINGULARITY_WIDTH-1))){
+        s->alive=0;
+    }
 }
 
 torpedo** setupTorpedoArray(){
-    torpedo** arr = malloc(sizeof(torpedo*)*MAX_TORPEDOS);
+    torpedo** arr = malloc(sizeof(torpedo*)*MAX_TORPEDOES);
+
+    for(int i=0; i<MAX_TORPEDOES; ++i){
+        arr[i] = malloc(sizeof(torpedo));
+        arr[i]->direction = -1;
+        arr[i]->x=9999;
+        arr[i]->y=9999;
+    }
+
     return arr;
 }
 
 void createTorpedo(torpedo** arr, ship* s){
-    for(int i=0; i<MAX_TORPEDOS; ++i){
-        if(arr[i]==0){
-            arr[i] = malloc(sizeof(torpedo));
+    for(int i=0; i<MAX_TORPEDOES; ++i){
+        if(arr[i]->x==9999){
             arr[i]->direction = s->direction;
             arr[i]->x=s->x;
             arr[i]->y=s->y;
+            calculateDirection(s->direction, &arr[i]->x, &arr[i]->y, 2);
             return;
         }
     }
 }
 
-void updateTorpedos(torpedo** torpedoArray){
-    for(int i=0; i<MAX_TORPEDOS; ++i){
+void updateTorpedos(torpedo** torpedoArray, ship* s1, ship* s2){
+    for(int i=0; i<MAX_TORPEDOES; ++i){
         torpedo* torp = torpedoArray[i];
-        if(torp!=0){
-        switch(torp->direction){
-            case(0):
-                torp->y+=2;
-                break;
-            case(1):
-                torp->y+=2;
-                torp->x-=4;
-                break;
-            case(2):
-                torp->x-=4;
-                break;
-            case(3):
-                torp->y-=2;
-                torp->x-=4;
-                break;
-            case(4):
-                torp->y-=2;
-                break;
-            case(5):
-                torp->y-=2;
-                torp->x+=4;
-                break;
-            case(6):
-                torp->x+=4;
-                break;
-            case(7):
-                torp->y+=2;
-                torp->x+=4;
-                break;
-        }
-        if(!(0<(torp->x)<MAX_X) || !(0<(torp->y)<MAX_Y)){
-            printf("torpedo out of bounds\n");
-            free(torpedoArray[i]);
-            torpedoArray[i]=0;
-        }}
-    }
-}
+        if(torp->x!=9999){
+            //move and check if out of bounds
+            calculateDirection(torp->direction, &torp->x, &torp->y, 2);
+            if(0>torp->y || MAX_Y<torp->y || 0>torp->x || MAX_X < torp->x){
+                torpedoArray[i]->x=9999;
+                continue;
+            }
 
-void checkCollisions(ship *s1, ship *s2, torpedo** ta){
-    
+            mvprintw(torp->y, torp->x, "*");
+
+            //check for any collisions
+            if(abs(s1->x-torp->x)<3 && abs(s1->y-torp->y)<2){
+                printf("ship 1 dead");
+                s1->alive=0;
+            }
+            if(abs(s2->x-torp->x)<3 && abs(s2->y-torp->y)<2){
+                printf("%d    \n",s2->x-torp->x);
+                s2->alive=0;
+            }
+            if(mvgetch(torp->y,torp->x)=='*'){
+                for(int j=0; j<MAX_TORPEDOES; ++j){
+                    if(torpedoArray[j]->x==torpedoArray[i]->x && torpedoArray[j]->y==torpedoArray[i]->y){
+                        torpedoArray[i]->x=9999;
+                        torpedoArray[j]->y=9999;
+                    }
+                }
+            }
+        }
+    }
 }
 
 void checkInput(char key, ship *s1, ship *s2, torpedo** ta){
@@ -198,28 +206,51 @@ void checkInput(char key, ship *s1, ship *s2, torpedo** ta){
             s1->thrust=0;
             break;
         case('e'):
-            createTorpedo(ta,s1);
+            if(s1->torpedoes>0){
+                --s1->torpedoes;
+                createTorpedo(ta,s1);
+            }
             break;
+
+        case('j'):
+            s2->direction=(s2->direction-1<0) ? (7) : (s2->direction-1);
+            break;
+        case('l'):
+            s2->direction=(s2->direction+1)%7;
+            break;
+        case('i'):
+            s2->thrust=1;
+            break;
+        case('k'):
+            s2->thrust=0;
+            break;
+        case('o'):
+            if(s2->torpedoes>0){
+                --s2->torpedoes;
+                createTorpedo(ta,s2);
+            }
+            break;
+
     }
 }
 
-void executeInputBuffer(ship *s1, ship *s2, torpedo** ta){
-    int inputBuffer[MAX_INP];
-    int inputBufferPointer =0;
+void input(ship *s1, ship *s2, torpedo** ta){
+    int inputChrs[MAX_INP];
+    int ptr =0;
     char alreadyIn;
 
     for(int i=0; i<1000; ++i){
         int ch = getch();
         if(ch!=-1){
             alreadyIn = 0;
-            for(int j=0; j<inputBufferPointer; ++j){
-                if (inputBuffer[j]==ch){
+            for(int j=0; j<ptr; ++j){
+                if (inputChrs[j]==ch){
                     alreadyIn=1;
                 }
             }
             if(alreadyIn==0){
-                inputBuffer[inputBufferPointer]=ch;
-                ++inputBufferPointer;
+                inputChrs[ptr]=ch;
+                ++ptr;
                 checkInput(ch, s1, s2, ta);
             }
         }
